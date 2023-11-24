@@ -74,9 +74,8 @@ DPMofConditionalVines<-function(U,X,family_x,ncov,M,m0,s0,HyperCov,JointSampling
       plot(Psi.max)
     }
     
-    # psi.star = max(psi) + 1
+    psi.star = max(psi) + 1
     if(psi.star>n) psi.star=n
-    psi.new<-psi
     for (i in 2:n){
       p_i<-NULL
       psi.minus<-psi[-i]
@@ -86,9 +85,9 @@ DPMofConditionalVines<-function(U,X,family_x,ncov,M,m0,s0,HyperCov,JointSampling
       }
       p_i<-c(p_i,log(M) -log(psi.star) + dCovariates(X=array(X[i,,],dim = c(1,ncov,dd)),family_x=family_x,mu=mu[iter-1,psi.star,],sigma2=sigma2[iter-1,psi.star,],theta=theta[iter-1,psi.star,]) +
                dVineCopCond(U[i,],beta[,,psi.star,iter-1],x=array(X[i,,],dim = c(1,ncov,dd)),d=d,log = TRUE) )
-      psi.new[i]<-sample(1:length(p_i),size=1,prob = exp(p_i)/sum(exp(p_i)))
+      psi[i]<-sample(1:length(p_i),size=1,prob = exp(p_i)/sum(exp(p_i)))
     }
-    
+    psi.new<-psi
     psi<-c()
     un<-unique(psi.new)
     for(i in 1:length(un)){
@@ -187,6 +186,7 @@ DPMofConditionalVines<-function(U,X,family_x,ncov,M,m0,s0,HyperCov,JointSampling
           l.lik.num<-sum(dVineCopCond(U[n.star,],prop.b,array(X[n.star,,],dim = c(length(n.star),ncov,dd)),d=d,log=T))
           l.lil.den<-sum(dVineCopCond(U[n.star,],last.b,array(X[n.star,,],dim = c(length(n.star),ncov,dd)),d=d,log=T))
           ACCEPT<-exp(l.lik.num+sum(dnorm(prop.b,m0,s0, log = TRUE))-l.lil.den-sum(dnorm(last.b,m0,s0, log = TRUE)))
+          if(is.na(ACCEPT)) ACCEPT=0 #Fix numerical problems
           if(ACCEPT>runif(1)){beta[,,k,iter]<-prop.b}else{beta[,,k,iter]<-last.b} 
         }else{
           last.b<-beta[,,k,iter-1]  
@@ -196,6 +196,7 @@ DPMofConditionalVines<-function(U,X,family_x,ncov,M,m0,s0,HyperCov,JointSampling
             l.lik.num<-sum(dVineCopCond(U[n.star,],prop.b,array(X[n.star,,],dim = c(length(n.star),ncov,dd)),d=d,log=T))
             l.lil.den<-sum(dVineCopCond(U[n.star,],last.b,array(X[n.star,,],dim = c(length(n.star),ncov,dd)),d=d,log=T))
             ACCEPT<-exp(l.lik.num+sum(dnorm(prop.b[,p],m0,s0, log = TRUE))-l.lil.den-sum(dnorm(last.b[,p],m0,s0, log = TRUE)))
+            if(is.na(ACCEPT)) ACCEPT=0 #Fix numerical problems
             if(ACCEPT>runif(1)){ beta[,p,k,iter]<-prop.b[,p] ; last.b[,p]<-prop.b[,p] }else{ beta[,,k,iter]<-last.b[,p]; prop.b[,p]<- last.b[,p]   }
           }
         }
@@ -229,4 +230,3 @@ DPMofConditionalVines<-function(U,X,family_x,ncov,M,m0,s0,HyperCov,JointSampling
   results$family_x<-family_x
   return(results)
 }
-
